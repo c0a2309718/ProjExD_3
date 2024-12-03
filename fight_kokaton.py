@@ -1,4 +1,5 @@
 import os
+import math
 import random
 import sys
 import time
@@ -120,6 +121,7 @@ class Bird:
         self.img = __class__.imgs[(+5, 0)]
         self.rct: pg.Rect = self.img.get_rect()
         self.rct.center = xy
+        self.dire = (+5, 0)  # 初期方向を右向きに設定
 
     def change_img(self, num: int, screen: pg.Surface):
         """
