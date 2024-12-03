@@ -65,7 +65,6 @@ class Explosion:
             screen.blit(img, img_rect)
 
 
-
 class Score:
     """
     スコアを管理するクラス
