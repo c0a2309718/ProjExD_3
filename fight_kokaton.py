@@ -25,6 +25,47 @@ def check_bound(obj_rct: pg.Rect) -> tuple[bool, bool]:
     return yoko, tate
 
 
+class Explosion:
+    """
+    爆弾が爆発した際の爆発エフェクトを管理するクラス
+    """
+    def __init__(self, bomb_rct: pg.Rect, life: int = 40):
+        """
+        引数: bomb_rct: 爆発する爆弾のRectオブジェクト life: 爆発の持続時間（デフォルト: 20）
+        """
+        # 爆発画像の読み込みと左右反転
+        self.images = [
+            pg.image.load("fig/explosion.gif"),  # 元画像
+            pg.transform.flip(pg.image.load("fig/explosion.gif"), True, False),  # 左右反転
+        ]
+        self.center = bomb_rct.center  # 爆発の中心座標を設定
+        self.life = life 
+
+    def update(self, screen: pg.Surface):
+        """
+        爆発を描画し、経過時間を更新するメソッド
+        引数: screen: 描画対象の画面Surface
+        """
+        self.life -= 1  
+        if self.life < 40:
+            img = self.images[0]
+            img_rect = img.get_rect(center=self.center)
+            screen.blit(img, img_rect)
+        if self.life < 30:
+            img = self.images[1]
+            img_rect = img.get_rect(center=self.center)
+            screen.blit(img, img_rect)
+        if self.life < 20:
+            img = self.images[0]
+            img_rect = img.get_rect(center=self.center)
+            screen.blit(img, img_rect)
+        if self.life < 10:
+            img = self.images[1]
+            img_rect = img.get_rect(center=self.center)
+            screen.blit(img, img_rect)
+
+
+
 class Score:
     """
     スコアを管理するクラス
@@ -47,8 +88,6 @@ class Score:
         self.img = self.fonto.render(f"スコア: {self.score}", 0, (0, 0, 255))
         screen.blit(self.img, self.rct)
 
-    def Score_UP(self):
-        self.score += 1
 
 class Bird:
     """
@@ -135,6 +174,7 @@ class Beam:
             screen.blit(self.img, self.rct)    
 
 
+
 class Bomb:
     """
     爆弾に関するクラス
@@ -173,10 +213,10 @@ def main():
     bird = Bird((300, 200))
     bomb = Bomb((255, 0, 0), 10)
     beam = None # Beam(bird)  # ビームインスタンス生成
-    beams = []
-    # bomb2 = Bomb((0, 0, 255), 20)  
+    beams = []  # ビームリスト
+    explosions = []  # 爆発エフェクトリスト
+    score = Score()  # スコア管理
     bombs = [Bomb((255, 0, 0), 10) for _ in range(NUM_OF_BOMBS)]  
-    score = Score()
     clock = pg.time.Clock()
     tmr = 0
     while True:
@@ -205,8 +245,9 @@ def main():
                     if beam.rct.colliderect(bomb.rct): #ビームが爆弾を打ち落としたら
                         beams[i] = None
                         bombs[j] = None
+                        explosions.append(Explosion(bomb.rct))
                         bird.change_img(6, screen)
-                        score.Score_UP()
+                        score.score += 1
                         pg.display.update()
 
         key_lst = pg.key.get_pressed()
@@ -215,11 +256,13 @@ def main():
         bombs = [bomb for bomb in bombs if bomb is not None]  #爆弾リストNone出ないものリスト
         beams = [beam for beam in beams if beam is not None]  #ビームリストNone出ないものリスト
         beams = [beam for beam in beams if check_bound(beam.rct) == (True, True)] # ビームの画面外判定と削除
+        explosions = [exp for exp in explosions if exp.life > 0]  # 爆発リストの更新（lifeが正のものだけ保持）
         for bomb in bombs:
             bomb.update(screen)
         for beam in beams:
             beam.update(screen)
-        # bomb2.update(screen)
+        for exp in explosions:  # 爆発を描画
+            exp.update(screen)
         score.update(screen)
         pg.display.update()
         tmr += 1
